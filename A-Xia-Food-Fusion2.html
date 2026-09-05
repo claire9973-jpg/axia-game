@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>阿霞便當 - 等餐大挑戰</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    body {
+      background: #fbf5ee;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden;
+      color: #4a3728;
+    }
+    .game-card {
+      background: #ffffff;
+      padding: 16px;
+      border-radius: 20px;
+      box-shadow: 0 12px 36px rgba(120, 80, 40, 0.12);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 95vw;
+      max-width: 410px;
+      position: relative;
+    }
+    .header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .header-left {
+      display: flex;
+      flex-direction: column;
+    }
+    .title {
+      font-size: 17px;
+      font-weight: bold;
+      color: #8c4a17;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .subtitle {
+      font-size: 11px;
+      color: #a88464;
+      margin-top: 1px;
+      font-weight: 500;
+    }
+    .stats {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .sound-btn {
+      background: #faebd7;
+      border: none;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(140, 74, 23, 0.12);
+      transition: transform 0.1s ease, background 0.2s ease;
+      color: #8c4a17;
+      flex-shrink: 0;
+    }
+    .sound-btn:active {
+      transform: scale(0.9);
+      background: #f0dac2;
+    }
+    .stat-badge {
+      background: #faebd7;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #8c4a17;
+    }
+    .status-tag {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 10px;
+      font-weight: bold;
+    }
+    .status-tag.active {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    .status-tag.chill {
+      background: #eeeeee;
+      color: #757575;
+    }
+    .canvas-container {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 3px solid #f0d5ba;
+      background: #fffdfa;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.03);
+    }
+    canvas {
+      display: block;
+      touch-action: none;
+    }
+    .footer-info {
+      width: 100%;
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .next-box {
+      font-size: 13px;
+      font-weight: 500;
+      color: #9c7a5b;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .dex-bar {
+      display: flex;
+      align-items: center;
+      background: #faf4ed;
+      padding: 5px 8px;
+      border-radius: 12px;
+      border: 1px solid #f2e1cf;
+      font-size: 11px;
+      gap: 6px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .dex-label {
+      flex-shrink: 0;
+      font-weight: 700;
+      color: #8c4a17;
+      font-size: 11px;
+    }
+    .dex-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-grow: 1;
+    }
+    .dex-item {
+      font-size: 13px;
+      line-height: 1;
+      filter: grayscale(90%) opacity(0.35);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transform: scale(0.92);
+      cursor: default;
+    }
+    .dex-item.unlocked {
+      filter: none;
+      opacity: 1;
+      transform: scale(1.06);
+    }
+    .dex-arrow {
+      font-size: 8px;
+      color: #d8c2ac;
+      user-select: none;
+    }
+    .dex-crown {
+      font-size: 15px;
+      position: relative;
+    }
+    .dex-crown.near-goal {
+      filter: none;
+      opacity: 0.85;
+      animation: crownPulse 1.4s infinite ease-in-out;
+    }
+    .dex-crown.unlocked {
+      filter: none;
+      opacity: 1;
+      animation: crownPulse 1s infinite ease-in-out;
+      transform: scale(1.25);
+    }
+    @keyframes crownPulse {
+      0%, 100% {
+        transform: scale(1.1);
+        filter: drop-shadow(0 0 2px #ffc107);
+      }
+      50% {
+        transform: scale(1.25);
+        filter: drop-shadow(0 0 6px #ff9800);
+      }
+    }
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(253, 246, 236, 0.94);
+      backdrop-filter: blur(5px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      border-radius: 14px;
+      padding: 24px;
+      text-align: center;
+      z-index: 10;
+    }
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .btn {
+      background: #e76f51;
+      color: white;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(231, 111, 81, 0.3);
+      transition: transform 0.1s ease;
+      margin-top: 8px;
+      width: 80%;
+      max-width: 220px;
+    }
+    .btn:active {
+      transform: scale(0.96);
+    }
+    .btn-secondary {
+      background: #d4a373;
+      box-shadow: 0 4px 12px rgba(212, 163, 115, 0.3);
+    }
+    .btn-gray {
+      background: #adb5bd;
+      box-shadow: none;
+      color: #ffffff;
+    }
+    .btn-gold {
+      background: linear-gradient(135deg, #ffb703, #fb8500);
+      box-shadow: 0 4px 15px rgba(251, 133, 0, 0.4);
+    }
+    .code-pill {
+      background: #ffffff;
+      border: 2px dashed #e76f51;
+      border-radius: 12px;
+      padding: 8px 16px;
+      font-size: 18px;
+      font-weight: 800;
+      color: #b33927;
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+      display: inline-block;
+    }
+    .test-stock-btn {
+      position: fixed;
+      bottom: 8px;
+      right: 8px;
+      z-index: 9999;
+      background: rgba(140, 74, 23, 0.12);
+      color: #7a4b27;
+      border: 1px dashed rgba(140, 74, 23, 0.35);
+      border-radius: 8px;
+      padding: 4px 8px;
+      font-size: 11px;
+      cursor: pointer;
+      opacity: 0.65;
+      backdrop-filter: blur(4px);
+      transition: opacity 0.2s, background 0.2s;
+      user-select: none;
+    }
+    .test-stock-btn:hover {
+      opacity: 1;
+      background: rgba(140, 74, 23, 0.22);
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+</head>
+<body>
+
+  <div class="game-card">
+    <div class="header">
+      <div class="header-left">
+        <div class="title">🧑‍🍳 阿霞便當等餐區</div>
+        <div class="subtitle">等餐太久？來合一顆便當。😏</div>
+      </div>
+      <div class="stats">
+        <button id="soundToggleBtn" class="sound-btn" title="切換音效" aria-label="音效開關">🔊</button>
+        <span id="modeTag" class="status-tag active">🎁 獎勵派發中</span>
+        <div class="stat-badge">分數: <span id="score">0</span></div>
+      </div>
+    </div>
+
+    <div class="canvas-container">
+      <canvas id="gameCanvas" width="360" height="520"></canvas>
+
+      <!-- 📢 1. 今日獎品兌完進場提示彈窗 -->
+      <div class="overlay" id="outOfStockOverlay">
+        <div style="font-size: 42px; margin-bottom: 8px;">📢</div>
+        <h3 style="color: #b33927; font-size: 20px; margin-bottom: 8px;">今日便當已被搶光囉！</h3>
+        <p style="font-size: 14px; color: #6d543e; margin-bottom: 18px; line-height: 1.5;">
+          老闆今天備料有限，免費兌換名額已全數派完！明天 11:00 重新補貨。<br><br>
+          您依然可以繼續遊玩打發等餐時間喔！
+        </p>
+        <button class="btn btn-secondary" onclick="startCasualMode()">純享受合成手感 🎮</button>
+        <button class="btn btn-gray" onclick="exitGamePrompt()">那我明天再來 🙋‍♂️</button>
+      </div>
+
+      <!-- 🍲 2. 一般遊戲結束結算 -->
+      <div class="overlay" id="gameOverOverlay">
+        <h2 style="color: #b33927; font-size: 24px; margin-bottom: 8px;">🍲 便當滿出來啦！</h2>
+        <p style="font-size: 15px; color: #6d543e; margin-bottom: 16px;">最終得分：<b id="finalScore">0</b></p>
+        <button class="btn" onclick="resetGame()">再煮一鍋 🍱</button>
+      </div>
+
+      <!-- 👑 3. 合出黃金便當（有獎勵模式） -->
+      <div class="overlay" id="grandPrizeOverlay">
+        <div style="font-size: 20px; font-weight: 900; color: #d48b00; margin-bottom: 6px;">✨ 神級料理降臨！✨</div>
+        <div style="font-size: 56px; margin: 8px 0;">👑🍱</div>
+        <p style="font-size: 14px; color: #7f5539; margin-bottom: 10px;">
+          恭喜合出<b>【阿霞巨大黃金便當】</b>！<br>憑代碼可向櫃檯老闆兌換<b>真實便當 1 個</b>！
+        </p>
+        <div class="code-pill" id="promoCodeDisplay">AXIA-GOLDEN-888</div>
+        <button class="btn btn-gold" id="copyCodeBtn" onclick="copyPromoCode()">📋 點擊複製代碼</button>
+        <button class="btn btn-secondary" onclick="continueAfterPrize()">繼續衝高分 🚀</button>
+      </div>
+
+      <!-- 🌟 4. 合出黃金便當（休閒模式榮譽彈窗） -->
+      <div class="overlay" id="casualVictoryOverlay">
+        <div style="font-size: 20px; font-weight: 900; color: #7f5539; margin-bottom: 6px;">🏆 廚神級控場達人！</div>
+        <div style="font-size: 56px; margin: 8px 0;">👑✨</div>
+        <p style="font-size: 14px; color: #7f5539; margin-bottom: 14px; line-height: 1.5;">
+          在狹小便當盒裡合出黃金便當！<br>今日獎品雖已送完，但您的手感已被阿霞認可！
+        </p>
+        <button class="btn" onclick="continueCasualAfterPrize()">太強了！繼續堆高分 🚀</button>
+      </div>
+    </div>
+
+    <div class="footer-info">
+      <div class="next-box">
+        <span>下一道小菜：</span>
+        <span id="nextItemText" style="font-size: 15px; font-weight: 700;">🥚 滷蛋</span>
+      </div>
+      <div class="dex-bar" title="料理進化順序">
+        <span class="dex-label">料理進化：</span>
+        <div class="dex-container" id="dexContainer"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⚙️ 測試輔助按鈕 -->
+  <button id="testResetStockBtn" class="test-stock-btn" title="測試用：清除今日挑戰紀錄並重整頁面">⚙️ 重置挑戰資格 (測試用)</button>
+
+  <script>
+    // 🔗 請換成你 Google Apps Script 部署後的 Web 應用程式網址（結尾是 /exec）
+    const GAS_WEBAPP_URL = "";
+
+    let isCasualMode = false; // 是否進入休閒無獎勵模式
+    let isDeductingReward = false; // 防止重複快速觸發扣庫存請求
+
+    function getTodayDateString() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+
+    const TIERS = [
+      { name: "青菜", emoji: "🥬", radius: 17, color: "#a7c957", score: 2 },
+      { name: "滷蛋", emoji: "🥚", radius: 23, color: "#e9c46a", score: 4 },
+      { name: "豆干", emoji: "🟫", radius: 29, color: "#d4a373", score: 8 },
+      { name: "香腸", emoji: "🌭", radius: 36, color: "#f28482", score: 16 },
+      { name: "珍奶", emoji: "🧋", radius: 44, color: "#b08968", score: 32 },
+      { name: "大雞腿", emoji: "🍗", radius: 53, color: "#f4a261", score: 64 },
+      { name: "滷肉飯", emoji: "🍚", radius: 63, color: "#f8edeb", score: 128 },
+      { name: "排骨便當", emoji: "🍱", radius: 74, color: "#e76f51", score: 256 },
+      { name: "巨大黃金便當", emoji: "👑", radius: 88, color: "#ffd166", score: 1000 }
+    ];
+
+    // Web Audio 音效
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+    let isMuted = false;
+
+    const soundToggleBtn = document.getElementById("soundToggleBtn");
+    if (soundToggleBtn) {
+      soundToggleBtn.addEventListener("click", () => {
+        isMuted = !isMuted;
+        soundToggleBtn.textContent = isMuted ? "🔇" : "🔊";
+        soundToggleBtn.title = isMuted ? "點擊開啟音效" : "點擊關閉音效";
+      });
+    }
+
+    function getAudioContext() {
+      if (!audioCtx) audioCtx = new AudioContext();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    function playPopSound(tierIdx, combo = 1) {
+      if (isMuted) return;
+      try {
+        const ctx = getAudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const comboBonus = (combo > 1) ? Math.min((combo - 1) * 35, 140) : 0;
+        const baseFreq = 320 + (tierIdx * 65) + comboBonus;
+        osc.type = "sine";
+        const now = ctx.currentTime;
+        osc.frequency.setValueAtTime(baseFreq, now);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 2.2, now + 0.08);
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.15);
+
+        // 若 Combo >= 2，加入清脆果凍彈跳副音（輕快不吵雜）
+        if (combo >= 2) {
+          const osc2 = ctx.createOscillator();
+          const gain2 = ctx.createGain();
+          osc2.type = "sine";
+          osc2.frequency.setValueAtTime(baseFreq * 1.5, now + 0.03);
+          osc2.frequency.exponentialRampToValueAtTime(baseFreq * 2.6, now + 0.11);
+          gain2.gain.setValueAtTime(0.12, now + 0.03);
+          gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
+          osc2.connect(gain2);
+          gain2.connect(ctx.destination);
+          osc2.start(now + 0.03);
+          osc2.stop(now + 0.13);
+        }
+      } catch (e) {}
+    }
+
+    function playThudSound() {
+      if (isMuted) return;
+      try {
+        const ctx = getAudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const now = ctx.currentTime;
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(120, now);
+        osc.frequency.exponentialRampToValueAtTime(30, now + 0.06);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.06);
+      } catch (e) {}
+    }
+
+    function playPrizeSound() {
+      if (isMuted) return;
+      try {
+        const ctx = getAudioContext();
+        const notes = [261.63, 329.63, 392.00, 523.25, 659.25];
+        notes.forEach((freq, index) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          const now = ctx.currentTime + (index * 0.09);
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(freq, now);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.35);
+        });
+      } catch (e) {}
+    }
+
+    const { Engine, World, Bodies, Composite, Events } = Matter;
+
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const scoreEl = document.getElementById("score");
+    const finalScoreEl = document.getElementById("finalScore");
+    const nextItemText = document.getElementById("nextItemText");
+    const modeTag = document.getElementById("modeTag");
+    const outOfStockOverlay = document.getElementById("outOfStockOverlay");
+    const gameOverOverlay = document.getElementById("gameOverOverlay");
+    const grandPrizeOverlay = document.getElementById("grandPrizeOverlay");
+    const casualVictoryOverlay = document.getElementById("casualVictoryOverlay");
+    const copyCodeBtn = document.getElementById("copyCodeBtn");
+    const dexContainer = document.getElementById("dexContainer");
+
+    const W = canvas.width;
+    const H = canvas.height;
+    const DANGER_Y = 85;
+
+    let engine, world;
+    let score = 0;
+    let isGameOver = false;
+    let canDrop = false; // 初始等確認彈窗後再開放
+    let currentTier = 0;
+    let nextTier = 0;
+    let aimX = W / 2;
+    let dangerTimer = 0;
+    let hasWonGrandPrize = false;
+
+    // 料理進化圖鑑狀態
+    const unlockedTiers = new Set([0]);
+
+    function initEvolutionDex() {
+      if (!dexContainer) return;
+      dexContainer.innerHTML = "";
+      TIERS.forEach((tier, index) => {
+        const item = document.createElement("span");
+        item.className = "dex-item" + (tier.emoji === "👑" ? " dex-crown" : "");
+        item.id = `dex-tier-${index}`;
+        item.textContent = tier.emoji;
+        item.title = `${tier.name}`;
+        dexContainer.appendChild(item);
+
+        if (index < TIERS.length - 1) {
+          const arrow = document.createElement("span");
+          arrow.className = "dex-arrow";
+          arrow.textContent = "→";
+          dexContainer.appendChild(arrow);
+        }
+      });
+      updateEvolutionDex();
+    }
+
+    function markTierUnlocked(tierIdx) {
+      if (!unlockedTiers.has(tierIdx)) {
+        unlockedTiers.add(tierIdx);
+        updateEvolutionDex();
+      }
+    }
+
+    function updateEvolutionDex() {
+      let maxUnlocked = 0;
+      unlockedTiers.forEach(t => {
+        if (t > maxUnlocked) maxUnlocked = t;
+      });
+
+      TIERS.forEach((tier, index) => {
+        const el = document.getElementById(`dex-tier-${index}`);
+        if (!el) return;
+        if (unlockedTiers.has(index)) {
+          el.classList.add("unlocked");
+        } else {
+          el.classList.remove("unlocked");
+        }
+
+        // 巨大黃金便當 👑 最終目標感與接近時發光
+        if (tier.emoji === "👑") {
+          if (unlockedTiers.has(index)) {
+            el.classList.add("unlocked");
+            el.classList.remove("near-goal");
+          } else if (maxUnlocked >= 6) { // 玩家合出 滷肉飯(6) 或 排骨便當(7) 時增加期待感
+            el.classList.add("near-goal");
+          } else {
+            el.classList.remove("near-goal");
+          }
+        }
+      });
+    }
+
+    // 泡泡果凍特效粒子
+    const bubbles = [];
+    function createMergeBubbles(x, y, color) {
+      const count = 7 + Math.floor(Math.random() * 4); // 7~10 個果凍小泡泡
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 / count) * i + (Math.random() - 0.5) * 0.7;
+        const speed = 1.4 + Math.random() * 2.8;
+        bubbles.push({
+          x: x,
+          y: y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 0.5,
+          r: 3.5 + Math.random() * 4.5,
+          color: color,
+          alpha: 0.85,
+          life: 0,
+          maxLife: 0.32 + Math.random() * 0.16 // 0.32~0.48 秒消失
+        });
+      }
+    }
+
+    // 合成分數浮字與 Combo 系統
+    const floatingTexts = [];
+    let comboCount = 0;
+    let lastMergeTime = 0;
+
+    function createFloatingText(x, y, scoreVal, combo, tierIdx) {
+      // 分數浮字
+      floatingTexts.push({
+        x: x + (Math.random() - 0.5) * 8,
+        y: y - 6,
+        text: `+${scoreVal}`,
+        color: tierIdx >= 7 ? "#d48b00" : (tierIdx >= 5 ? "#e76f51" : "#b33927"),
+        fontSize: tierIdx >= 7 ? 20 : (tierIdx >= 5 ? 17 : 15),
+        life: 0,
+        maxLife: 0.65
+      });
+
+      // Combo 浮字（短時間連續合成）
+      if (combo >= 2) {
+        floatingTexts.push({
+          x: x,
+          y: y - 28,
+          text: `COMBO ×${combo}`,
+          color: "#f77f00",
+          fontSize: 15 + Math.min(combo * 1.5, 6),
+          life: 0,
+          maxLife: 0.8
+        });
+      }
+    }
+
+    function initPhysics() {
+      engine = Engine.create({ gravity: { x: 0, y: 1.1 } });
+      world = engine.world;
+
+      const wallOptions = { isStatic: true, friction: 0.3, restitution: 0.1 };
+      const ground = Bodies.rectangle(W / 2, H + 25, W * 2, 60, wallOptions);
+      const leftWall = Bodies.rectangle(-15, H / 2, 30, H * 2, wallOptions);
+      const rightWall = Bodies.rectangle(W + 15, H / 2, 30, H * 2, wallOptions);
+
+      World.add(world, [ground, leftWall, rightWall]);
+      Events.on(engine, "collisionStart", handleCollisions);
+    }
+
+    async function checkDailyQuota() {
+      const today = getTodayDateString();
+      const lastChallengeDate = localStorage.getItem("axia_last_challenge_date");
+      const hasChallengedToday = (lastChallengeDate === today);
+
+      // 若今日已經挑戰過，直接切為休閒模式
+      if (hasChallengedToday) {
+        isCasualMode = true;
+        modeTag.textContent = "☕ 今日挑戰已用完（休閒模式）";
+        modeTag.className = "status-tag chill";
+        canDrop = true;
+        return;
+      }
+
+      // 若未設定 GAS_WEBAPP_URL，以休閒模式運行並提示
+      if (!GAS_WEBAPP_URL || GAS_WEBAPP_URL.trim() === "") {
+        console.warn("⚠️ 尚未設定 GAS_WEBAPP_URL，目前以休閒模式進行。請填入 GAS 部署網址以啟用雲端獎勵庫存！");
+        isCasualMode = true;
+        modeTag.textContent = "☕ 休閒模式（未設定雲端庫存）";
+        modeTag.className = "status-tag chill";
+        canDrop = true;
+        return;
+      }
+
+      modeTag.textContent = "🔄 查詢獎勵庫存中...";
+      modeTag.className = "status-tag chill";
+
+      try {
+        const res = await fetch(`${GAS_WEBAPP_URL}?action=check`);
+        const data = await res.json();
+
+        if (!data.active || !data.stock || data.stock <= 0) {
+          // 雲端庫存為 0 或活動暫停，轉為休閒模式
+          isCasualMode = true;
+          modeTag.textContent = !data.active ? "☕ 活動暫停中（休閒模式）" : "☕ 休閒模式（無獎品）";
+          modeTag.className = "status-tag chill";
+          outOfStockOverlay.classList.add("show");
+        } else {
+          // 有雲端庫存且今日尚未挑戰，進入挑戰模式
+          isCasualMode = false;
+          modeTag.textContent = "🏆 今日挑戰資格 (1/1)";
+          modeTag.className = "status-tag active";
+          canDrop = true;
+        }
+      } catch (err) {
+        console.error("無法連線至 GAS 庫存服務：", err);
+        // 連線異常降級為休閒模式，遊戲仍可玩
+        isCasualMode = true;
+        modeTag.textContent = "☕ 離線休閒模式";
+        modeTag.className = "status-tag chill";
+        canDrop = true;
+      }
+    }
+
+    function consumeChallengeQuota() {
+      if (!isCasualMode) {
+        const today = getTodayDateString();
+        localStorage.setItem("axia_last_challenge_date", today);
+        isCasualMode = true;
+        modeTag.textContent = "☕ 今日挑戰已用完（休閒模式）";
+        modeTag.className = "status-tag chill";
+      }
+    }
+
+    window.startCasualMode = function() {
+      outOfStockOverlay.classList.remove("show");
+      canDrop = true;
+    };
+
+    window.exitGamePrompt = function() {
+      outOfStockOverlay.innerHTML = `
+        <div style="font-size: 48px; margin-bottom: 12px;">🍱</div>
+        <h3 style="color: #8c4a17; font-size: 20px; margin-bottom: 8px;">感謝您的支持！</h3>
+        <p style="font-size: 14px; color: #6d543e; margin-bottom: 16px;">阿霞便當現正熱騰騰出鍋中，祝您用餐愉快！</p>
+      `;
+    };
+
+    function getRandomStartTier() {
+      return Math.floor(Math.random() * 3);
+    }
+
+    function spawnFood(x, y, tierIndex, isStatic = false) {
+      const tier = TIERS[tierIndex];
+      const body = Bodies.circle(x, y, tier.radius, {
+        isStatic: isStatic,
+        restitution: 0.15,
+        friction: 0.2,
+        density: 0.002
+      });
+      body.foodTier = tierIndex;
+      body.isFood = true;
+      body.createdAt = Date.now();
+      body.isMerging = false;
+      return body;
+    }
+
+    function handleCollisions(event) {
+      const pairs = event.pairs;
+      let hasThud = false;
+
+      for (let i = 0; i < pairs.length; i++) {
+        const { bodyA, bodyB } = pairs[i];
+
+        if ((bodyA.isFood || bodyB.isFood) && !hasThud) {
+          playThudSound();
+          hasThud = true;
+        }
+
+        if (
+          bodyA.isFood && bodyB.isFood &&
+          bodyA.foodTier === bodyB.foodTier &&
+          !bodyA.isMerging && !bodyB.isMerging &&
+          bodyA.foodTier < TIERS.length - 1
+        ) {
+          bodyA.isMerging = true;
+          bodyB.isMerging = true;
+
+          const nextTierIdx = bodyA.foodTier + 1;
+          const midX = (bodyA.position.x + bodyB.position.x) / 2;
+          const midY = (bodyA.position.y + bodyB.position.y) / 2;
+
+          // Combo 判定（1.5 秒時間窗口）
+          const now = Date.now();
+          if (now - lastMergeTime < 1500) {
+            comboCount++;
+          } else {
+            comboCount = 1;
+          }
+          lastMergeTime = now;
+
+          const gainedScore = TIERS[nextTierIdx].score;
+          score += gainedScore;
+          scoreEl.textContent = score;
+
+          // 產生泡泡特效與浮字
+          createMergeBubbles(midX, midY, TIERS[nextTierIdx].color);
+          createFloatingText(midX, midY, gainedScore, comboCount, nextTierIdx);
+
+          // 播放合成音效（傳入 combo 增加微小音調與層次變化）
+          playPopSound(nextTierIdx, comboCount);
+
+          // 更新圖鑑狀態
+          markTierUnlocked(nextTierIdx);
+
+          setTimeout(() => {
+            World.remove(world, [bodyA, bodyB]);
+            const upgradedBody = spawnFood(midX, midY, nextTierIdx);
+            // Q 彈動畫（約 0.26 秒）
+            upgradedBody.animStart = Date.now();
+            upgradedBody.animDuration = 260;
+            World.add(world, upgradedBody);
+
+            if (nextTierIdx === TIERS.length - 1 && !hasWonGrandPrize) {
+              hasWonGrandPrize = true;
+              triggerGrandPrize();
+            }
+          }, 15);
+        }
+      }
+    }
+
+    async function triggerGrandPrize() {
+      if (isDeductingReward) return; // 防止重複快速觸發扣庫存
+      canDrop = false;
+      playPrizeSound();
+
+      // 若處於休閒模式，直接顯示榮譽彈窗
+      if (isCasualMode) {
+        casualVictoryOverlay.classList.add("show");
+        return;
+      }
+
+      // 處於挑戰模式：先消耗今日挑戰資格
+      consumeChallengeQuota();
+
+      // 若未設定 GAS_WEBAPP_URL，提示並顯示榮譽彈窗
+      if (!GAS_WEBAPP_URL || GAS_WEBAPP_URL.trim() === "") {
+        casualVictoryOverlay.classList.add("show");
+        return;
+      }
+
+      // 向 GAS 要求扣除一份獎勵庫存
+      isDeductingReward = true;
+      try {
+        const res = await fetch(`${GAS_WEBAPP_URL}?action=deduct`);
+        const data = await res.json();
+
+        // 只有 GAS 回傳扣除成功時，才顯示真實兌換獎勵
+        if (data && data.success === true) {
+          grandPrizeOverlay.classList.add("show");
+        } else {
+          // 若回傳已無庫存或活動暫停：仍可正常遊玩，顯示榮譽彈窗
+          casualVictoryOverlay.classList.add("show");
+        }
+      } catch (err) {
+        console.error("向 GAS 扣除庫存失敗：", err);
+        // 連線異常容錯：顯示榮譽彈窗
+        casualVictoryOverlay.classList.add("show");
+      } finally {
+        isDeductingReward = false;
+      }
+    }
+
+    window.continueAfterPrize = function() {
+      grandPrizeOverlay.classList.remove("show");
+      canDrop = true;
+    };
+
+    window.continueCasualAfterPrize = function() {
+      casualVictoryOverlay.classList.remove("show");
+      canDrop = true;
+    };
+
+    window.copyPromoCode = function() {
+      const code = document.getElementById("promoCodeDisplay").innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        copyCodeBtn.innerText = "✅ 複製成功！快找老闆！";
+        setTimeout(() => copyCodeBtn.innerText = "📋 點擊複製代碼", 2500);
+      });
+    };
+
+    function dropCurrentFood() {
+      getAudioContext();
+      if (!canDrop || isGameOver) return;
+      canDrop = false;
+
+      const food = spawnFood(aimX, 45, currentTier);
+      World.add(world, food);
+
+      currentTier = nextTier;
+      nextTier = getRandomStartTier();
+      markTierUnlocked(currentTier);
+      markTierUnlocked(nextTier);
+      nextItemText.textContent = `${TIERS[nextTier].emoji} ${TIERS[nextTier].name}`;
+
+      setTimeout(() => {
+        const isAnyOverlayOpen = 
+          grandPrizeOverlay.classList.contains("show") ||
+          casualVictoryOverlay.classList.contains("show") ||
+          outOfStockOverlay.classList.contains("show");
+        if (!isGameOver && !isAnyOverlayOpen) {
+          canDrop = true;
+        }
+      }, 550);
+    }
+
+    function updateAim(clientX) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const x = (clientX - rect.left) * scaleX;
+      const currentRadius = TIERS[currentTier].radius;
+      aimX = Math.max(currentRadius + 6, Math.min(W - currentRadius - 6, x));
+    }
+
+    canvas.addEventListener("mousemove", (e) => updateAim(e.clientX));
+    canvas.addEventListener("click", () => dropCurrentFood());
+
+    canvas.addEventListener("touchmove", (e) => {
+      e.preventDefault();
+      if (e.touches.length > 0) updateAim(e.touches[0].clientX);
+    }, { passive: false });
+
+    canvas.addEventListener("touchend", (e) => {
+      e.preventDefault();
+      dropCurrentFood();
+    });
+
+    function checkGameOver() {
+      const allBodies = Composite.allBodies(world);
+      let overflow = false;
+      const now = Date.now();
+
+      for (const b of allBodies) {
+        if (b.isFood && now - b.createdAt > 1500) {
+          if (b.position.y - b.circleRadius < DANGER_Y) {
+            overflow = true;
+            break;
+          }
+        }
+      }
+
+      if (overflow) {
+        dangerTimer += 1;
+        if (dangerTimer > 100) triggerGameOver();
+      } else {
+        dangerTimer = Math.max(0, dangerTimer - 1);
+      }
+    }
+
+    function triggerGameOver() {
+      isGameOver = true;
+      canDrop = false;
+      finalScoreEl.textContent = score;
+      consumeChallengeQuota();
+      gameOverOverlay.classList.add("show");
+    }
+
+    window.resetGame = function() {
+      gameOverOverlay.classList.remove("show");
+      grandPrizeOverlay.classList.remove("show");
+      casualVictoryOverlay.classList.remove("show");
+      const allBodies = Composite.allBodies(world);
+      const foodBodies = allBodies.filter(b => b.isFood);
+      World.remove(world, foodBodies);
+      score = 0;
+      scoreEl.textContent = "0";
+      isGameOver = false;
+      hasWonGrandPrize = false;
+      dangerTimer = 0;
+      comboCount = 0;
+      lastMergeTime = 0;
+      bubbles.length = 0;
+      floatingTexts.length = 0;
+
+      // 檢查是否轉為休閒模式
+      const today = getTodayDateString();
+      const lastChallengeDate = localStorage.getItem("axia_last_challenge_date");
+      if (lastChallengeDate === today) {
+        isCasualMode = true;
+        modeTag.textContent = "☕ 今日挑戰已用完（休閒模式）";
+        modeTag.className = "status-tag chill";
+      }
+
+      currentTier = getRandomStartTier();
+      nextTier = getRandomStartTier();
+      markTierUnlocked(currentTier);
+      markTierUnlocked(nextTier);
+      nextItemText.textContent = `${TIERS[nextTier].emoji} ${TIERS[nextTier].name}`;
+      canDrop = true;
+    };
+
+    function render() {
+      Engine.update(engine, 1000 / 60);
+      ctx.clearRect(0, 0, W, H);
+
+      ctx.save();
+      ctx.setLineDash([6, 6]);
+      ctx.strokeStyle = dangerTimer > 30 ? "#e63946" : "#e0c3a8";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(0, DANGER_Y);
+      ctx.lineTo(W, DANGER_Y);
+      ctx.stroke();
+      ctx.restore();
+
+      const isAnyOverlayOpen = 
+        grandPrizeOverlay.classList.contains("show") ||
+        casualVictoryOverlay.classList.contains("show") ||
+        outOfStockOverlay.classList.contains("show");
+
+      if (canDrop && !isGameOver && !isAnyOverlayOpen) {
+        ctx.save();
+        ctx.setLineDash([3, 4]);
+        ctx.strokeStyle = "rgba(140, 74, 23, 0.25)";
+        ctx.beginPath();
+        ctx.moveTo(aimX, 50);
+        ctx.lineTo(aimX, H - 10);
+        ctx.stroke();
+        ctx.restore();
+
+        drawFoodCircle(aimX, 45, TIERS[currentTier], true);
+      }
+
+      // 繪製盤內所有食物（支援 Q 彈果凍動畫）
+      const allBodies = Composite.allBodies(world);
+      for (const b of allBodies) {
+        if (b.isFood) {
+          drawFoodCircle(b.position.x, b.position.y, TIERS[b.foodTier], false, b);
+        }
+      }
+
+      // Combo 時間窗口檢查（超過 1.5 秒自動重設）
+      if (comboCount > 0 && Date.now() - lastMergeTime > 1500) {
+        comboCount = 0;
+      }
+
+      // 繪製合成果凍泡泡特效
+      for (let i = bubbles.length - 1; i >= 0; i--) {
+        const b = bubbles[i];
+        b.life += 1 / 60;
+        if (b.life >= b.maxLife) {
+          bubbles.splice(i, 1);
+          continue;
+        }
+        const progress = b.life / b.maxLife;
+        b.x += b.vx;
+        b.y += b.vy;
+        b.vy += 0.04; // 柔和微小浮力
+        const currentAlpha = b.alpha * (1 - progress);
+        const currentR = b.r * (1 + 0.28 * Math.sin(progress * Math.PI));
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, Math.max(0.5, currentR), 0, Math.PI * 2);
+        ctx.fillStyle = b.color;
+        ctx.globalAlpha = currentAlpha * 0.7;
+        ctx.fill();
+
+        // 泡泡果凍高光反光點
+        ctx.beginPath();
+        ctx.arc(b.x - currentR * 0.3, b.y - currentR * 0.3, currentR * 0.35, 0, Math.PI * 2);
+        ctx.fillStyle = "#ffffff";
+        ctx.globalAlpha = currentAlpha * 0.85;
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // 繪製合成分數浮字與 Combo
+      for (let i = floatingTexts.length - 1; i >= 0; i--) {
+        const ft = floatingTexts[i];
+        ft.life += 1 / 60;
+        if (ft.life >= ft.maxLife) {
+          floatingTexts.splice(i, 1);
+          continue;
+        }
+        const progress = ft.life / ft.maxLife;
+        const currentY = ft.y - (progress * 30);
+        const currentAlpha = 1 - Math.pow(progress, 1.6);
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, currentAlpha);
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = `900 ${ft.fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+        ctx.lineJoin = "round";
+        ctx.lineWidth = 3.5;
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
+        ctx.strokeText(ft.text, ft.x, currentY);
+        ctx.fillStyle = ft.color;
+        ctx.fillText(ft.text, ft.x, currentY);
+        ctx.restore();
+      }
+
+      checkGameOver();
+      requestAnimationFrame(render);
+    }
+
+    function drawFoodCircle(x, y, tier, isPreview = false, body = null) {
+      ctx.save();
+      ctx.translate(x, y);
+
+      // Q 彈動畫（只影響視覺縮放，不改動物理半徑）
+      let scale = 1;
+      if (body && body.animStart) {
+        const elapsed = Date.now() - body.animStart;
+        if (elapsed < body.animDuration) {
+          const t = elapsed / body.animDuration; // 0 -> 1
+          // 果凍阻尼 Q 彈：出現瞬間放大約 1.25x，隨後快速回縮回穩
+          const bounce = Math.sin(t * Math.PI * 2.2) * Math.exp(-t * 3.2) * 0.35;
+          scale = 1 + bounce;
+        } else {
+          body.animStart = null;
+        }
+      }
+
+      if (scale !== 1) {
+        ctx.scale(scale, scale);
+      }
+
+      ctx.beginPath();
+      ctx.arc(0, 0, tier.radius, 0, Math.PI * 2);
+      ctx.fillStyle = tier.color;
+      if (!isPreview) {
+        ctx.shadowColor = "rgba(0, 0, 0, 0.1)";
+        ctx.shadowBlur = 6;
+        ctx.shadowOffsetY = 3;
+      }
+      ctx.fill();
+
+      if (tier.emoji === "👑") {
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = "#ff9f1c";
+      } else {
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.75)";
+      }
+      ctx.stroke();
+
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = `${Math.floor(tier.radius * 0.95)}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+      ctx.fillText(tier.emoji, 0, 0);
+
+      ctx.restore();
+    }
+
+    initPhysics();
+    currentTier = getRandomStartTier();
+    nextTier = getRandomStartTier();
+    markTierUnlocked(currentTier);
+    markTierUnlocked(nextTier);
+    initEvolutionDex();
+    nextItemText.textContent = `${TIERS[nextTier].emoji} ${TIERS[nextTier].name}`;
+    checkDailyQuota();
+
+    // 測試輔助按鈕：清除今日已挑戰紀錄並重整頁面，方便重複測試挑戰模式
+    const testResetStockBtn = document.getElementById("testResetStockBtn");
+    if (testResetStockBtn) {
+      testResetStockBtn.addEventListener("click", () => {
+        localStorage.removeItem("axia_last_challenge_date");
+        location.reload();
+      });
+    }
+
+    requestAnimationFrame(render);
+  </script>
+</body>
+</html>
