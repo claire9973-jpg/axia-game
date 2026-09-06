@@ -118,6 +118,8 @@
       padding: 3px 8px;
       border-radius: 10px;
       font-weight: bold;
+      white-space: nowrap;
+      line-height: 1.2;
     }
     .status-tag.active {
       background: #e8f5e9;
@@ -394,6 +396,7 @@
   <script>
     // 🔗 請換成你 Google Apps Script 部署後的 Web 應用程式網址（結尾是 /exec）
     const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxQez6rJ2AvNsCpX3VT64S9Ubi02dwb6IPCEAwMSfGKrnkRcQ_S_kKgNc1xDgY8gkUa/exec";
+
 
     let isCasualMode = false; // 是否進入休閒無獎勵模式
     let isDeductingReward = false; // 防止重複快速觸發扣庫存請求
@@ -679,7 +682,7 @@
       // 若今日已經挑戰過，直接切為休閒模式
       if (hasChallengedToday) {
         isCasualMode = true;
-        modeTag.textContent = "☕ 今日挑戰已用完（休閒模式）";
+        modeTag.textContent = "☕ 今日已挑戰 (休閒模式)";
         modeTag.className = "status-tag chill";
         canDrop = true;
         return;
@@ -689,7 +692,7 @@
       if (!GAS_WEBAPP_URL || GAS_WEBAPP_URL.trim() === "") {
         console.warn("⚠️ 尚未設定 GAS_WEBAPP_URL，目前以休閒模式進行。請填入 GAS 部署網址以啟用雲端獎勵庫存！");
         isCasualMode = true;
-        modeTag.textContent = "☕ 休閒模式（未設定雲端庫存）";
+        modeTag.textContent = "☕ 休閒模式 (無獎品)";
         modeTag.className = "status-tag chill";
         canDrop = true;
         return;
@@ -711,13 +714,13 @@
         if (!data.active || !data.stock || data.stock <= 0) {
           // 雲端庫存為 0 或活動暫停，轉為休閒模式
           isCasualMode = true;
-          modeTag.textContent = !data.active ? "☕ 活動暫停中（休閒模式）" : "☕ 休閒模式（無獎品）";
+          modeTag.textContent = !data.active ? "☕ 活動暫停 (休閒模式)" : "☕ 休閒模式 (無獎品)";
           modeTag.className = "status-tag chill";
           outOfStockOverlay.classList.add("show");
         } else {
           // 有雲端庫存且今日尚未挑戰，進入挑戰模式
           isCasualMode = false;
-          modeTag.textContent = `🏆 今日挑戰 (剩餘 ${data.stock} 份)`;
+          modeTag.textContent = `🏆 資格 1/1 ｜ 剩 ${data.stock} 份`;
           modeTag.className = "status-tag active";
           canDrop = true;
         }
@@ -736,7 +739,7 @@
         const today = getTodayDateString();
         localStorage.setItem("axia_last_challenge_date", today);
         isCasualMode = true;
-        modeTag.textContent = "☕ 今日挑戰已用完（休閒模式）";
+        modeTag.textContent = "☕ 今日已挑戰 (休閒模式)";
         modeTag.className = "status-tag chill";
       }
     }
@@ -1071,7 +1074,7 @@
       const lastChallengeDate = localStorage.getItem("axia_last_challenge_date");
       if (lastChallengeDate === today) {
         isCasualMode = true;
-        modeTag.textContent = "☕ 今日挑戰已用完（休閒模式）";
+        modeTag.textContent = "☕ 今日已挑戰 (休閒模式)";
         modeTag.className = "status-tag chill";
       }
 
