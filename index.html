@@ -129,6 +129,40 @@
       background: #eeeeee;
       color: #757575;
     }
+    /* 📱 窄螢幕最佳化：將挑戰狀態換到下一行，保持標題、音效與分數舒適排列 */
+    @media (max-width: 520px) {
+      .header {
+        flex-wrap: wrap;
+        row-gap: 6px;
+      }
+      .header-left {
+        order: 1;
+      }
+      .stats {
+        display: contents;
+      }
+      .sound-btn {
+        order: 2;
+        margin-left: auto;
+      }
+      .crown-badge {
+        order: 3;
+        margin-left: 6px;
+      }
+      .stat-badge {
+        order: 4;
+        margin-left: 6px;
+      }
+      .status-tag {
+        order: 5;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 2px;
+        box-sizing: border-box;
+      }
+    }
     .canvas-container {
       position: relative;
       border-radius: 16px;
