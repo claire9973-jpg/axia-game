@@ -93,26 +93,6 @@
       font-weight: 600;
       color: #8c4a17;
     }
-    .crown-badge {
-      background: linear-gradient(135deg, #fff3cd, #ffe082);
-      color: #b78103;
-      border: 1px solid #ffd54f;
-      padding: 3px 8px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: 800;
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-      box-shadow: 0 2px 6px rgba(255, 193, 7, 0.35);
-      user-select: none;
-      animation: crownPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    @keyframes crownPop {
-      0% { transform: scale(0.6); opacity: 0; }
-      70% { transform: scale(1.22); }
-      100% { transform: scale(1); opacity: 1; }
-    }
     .status-tag {
       font-size: 11px;
       padding: 3px 8px;
@@ -145,16 +125,12 @@
         order: 2;
         margin-left: auto;
       }
-      .crown-badge {
+      .stat-badge {
         order: 3;
         margin-left: 6px;
       }
-      .stat-badge {
-        order: 4;
-        margin-left: 6px;
-      }
       .status-tag {
-        order: 5;
+        order: 4;
         width: 100%;
         display: flex;
         justify-content: center;
@@ -382,12 +358,11 @@
   <div class="game-card">
     <div class="header">
       <div class="header-left">
-        <div class="title">🧑‍🍳 阿霞等餐區</div>
+        <div class="title">🧑‍🍳 阿霞便當等餐區</div>
         <div class="subtitle">等餐太久？來合一顆便當。😏</div>
       </div>
       <div class="stats">
         <button id="soundToggleBtn" class="sound-btn" title="切換音效" aria-label="音效開關">🔊</button>
-        <div id="crownBadge" class="crown-badge" style="display: none;" title="神級料理已打包收納">👑 × <span id="crownCount">0</span></div>
         <span id="modeTag" class="status-tag active">🎁 獎勵派發中</span>
         <div class="stat-badge">分數: <span id="score">0</span></div>
       </div>
@@ -397,7 +372,7 @@
       <canvas id="gameCanvas" width="360" height="520"></canvas>
 
       <!-- 📢 庫存動態變更輕量 Toast 提示 (不阻擋操作) -->
-      <div id="stockToast" class="stock-toast">📢 大會廣播：今日最後一份🎁已被隔壁神手搶先夾走！請各位繼續享受控場手感吧~</div>
+      <div id="stockToast" class="stock-toast">📢 大會廣播：今日最後一份🎁已被隔壁神手搶先夾走！請各位繼續享受控場手感</div>
 
       <!-- 📢 1. 今日獎品兌完進場提示彈窗 -->
       <div class="overlay" id="outOfStockOverlay">
@@ -460,7 +435,6 @@
     // 🔗 請換成你 Google Apps Script 部署後的 Web 應用程式網址（結尾是 /exec）
     const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxQez6rJ2AvNsCpX3VT64S9Ubi02dwb6IPCEAwMSfGKrnkRcQ_S_kKgNc1xDgY8gkUa/exec";
 
-
     let isCasualMode = false; // 是否進入休閒無獎勵模式
     let isDeductingReward = false; // 防止重複快速觸發扣庫存請求
     let stockPollInterval = null; // 庫存自動背景輪詢計時器
@@ -482,7 +456,7 @@
       { name: "大雞腿", emoji: "🍗", radius: 53, color: "#f4a261", score: 64 },
       { name: "滷肉飯", emoji: "🍚", radius: 63, color: "#f8edeb", score: 128 },
       { name: "排骨便當", emoji: "🍱", radius: 74, color: "#e76f51", score: 256 },
-      { name: "巨大黃金便當", emoji: "👑", radius: 88, color: "#ffd166", score: 1000 }
+      { name: "巨大黃金便當", emoji: "👑", radius: 80, color: "#ffd166", score: 1000 }
     ];
 
     // Web Audio 音效
@@ -595,8 +569,6 @@
     const casualVictoryOverlay = document.getElementById("casualVictoryOverlay");
     const copyCodeBtn = document.getElementById("copyCodeBtn");
     const dexContainer = document.getElementById("dexContainer");
-    const crownBadgeEl = document.getElementById("crownBadge");
-    const crownCountEl = document.getElementById("crownCount");
 
     const W = canvas.width;
     const H = canvas.height;
@@ -604,7 +576,6 @@
 
     let engine, world;
     let score = 0;
-    let goldenLunchboxCount = 0; // 收納黃金便當成就計數
     let isGameOver = false;
     let canDrop = false; // 初始等確認彈窗後再開放
     let currentTier = 0;
@@ -784,7 +755,7 @@
         } else {
           // 有雲端庫存且今日尚未挑戰，進入挑戰模式
           isCasualMode = false;
-          modeTag.textContent = `🏆 可挑戰 1/1 ｜ 🎁剩 ${data.stock} 份`;
+          modeTag.textContent = `🏆 資格 1/1 ｜ 剩 ${data.stock} 份`;
           modeTag.className = "status-tag active";
           canDrop = true;
         }
@@ -1042,60 +1013,13 @@
       }
     }
 
-    function packGoldenLunchboxes() {
-      // 找出世界中所有巨大黃金便當 (Tier 8)
-      const allBodies = Composite.allBodies(world);
-      const goldenBodies = allBodies.filter(b => b.isFood && b.foodTier === TIERS.length - 1);
-
-      if (goldenBodies.length > 0) {
-        goldenBodies.forEach(b => {
-          // 金色果凍泡泡碎屑粒子特效
-          createMergeBubbles(b.position.x, b.position.y, "#ffd700");
-          createMergeBubbles(b.position.x, b.position.y, "#ffb703");
-
-          // 金色榮譽浮字提示
-          floatingTexts.push({
-            x: b.position.x,
-            y: b.position.y - 12,
-            text: "🍱 榮譽打包！",
-            color: "#d48b00",
-            fontSize: 20,
-            life: 0,
-            maxLife: 0.85
-          });
-
-          // 將該實體從物理世界中移除，釋放便當盒空間
-          World.remove(world, b);
-          goldenLunchboxCount++;
-        });
-
-        // 更新頂部皇冠成就標記
-        if (crownBadgeEl && crownCountEl) {
-          crownCountEl.textContent = goldenLunchboxCount;
-          crownBadgeEl.style.display = "inline-flex";
-          // 重新觸發彈出動畫
-          crownBadgeEl.style.animation = "none";
-          void crownBadgeEl.offsetWidth; // 強制重繪
-          crownBadgeEl.style.animation = "crownPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)";
-        }
-
-        // 播放打包收納音效
-        playPopSound(TIERS.length - 1, 3);
-      }
-
-      // 重設大獎觸發旗標，若後續再度合出黃金便當，仍可再度彈出榮譽彈窗並累加皇冠
-      hasWonGrandPrize = false;
-    }
-
     window.continueAfterPrize = function() {
       grandPrizeOverlay.classList.remove("show");
-      packGoldenLunchboxes();
       canDrop = true;
     };
 
     window.continueCasualAfterPrize = function() {
       casualVictoryOverlay.classList.remove("show");
-      packGoldenLunchboxes();
       canDrop = true;
     };
 
@@ -1192,11 +1116,6 @@
       World.remove(world, foodBodies);
       score = 0;
       scoreEl.textContent = "0";
-      goldenLunchboxCount = 0;
-      if (crownBadgeEl && crownCountEl) {
-        crownCountEl.textContent = "0";
-        crownBadgeEl.style.display = "none";
-      }
       isGameOver = false;
       hasWonGrandPrize = false;
       dangerTimer = 0;
